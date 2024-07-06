@@ -9,16 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0c08e5688295c114d881145f141fd50c, type: 3}
-  m_Name: GameSettings
+  m_Script: {fileID: 11500000, guid: b06179091ddd25e44a7468200d9ecd2a, type: 3}
+  m_Name: Square Properties
   m_EditorClassIdentifier: 
-  m_BoardSize: 6
-  m_BoardSizes:
-  - BoardSize: 4
-    CellSize: 400
-  - BoardSize: 6
-    CellSize: 250
-  - BoardSize: 8
-    CellSize: 180
-  - BoardSize: 10
-    CellSize: 150
+  m_Color:
+    serializedVersion: 2
+    rgba: 4284966759
+  m_Sprite: {fileID: 0}
