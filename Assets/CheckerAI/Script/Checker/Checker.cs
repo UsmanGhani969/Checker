@@ -1,6 +1,7 @@
 using CheckerAI.Utilities;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,6 +19,8 @@ namespace CheckerAI.Objects
         [SerializeField]
         private Button m_Button;
 
+        private bool m_IsKing;
+
 
         private void OnEnable() => AddListeners();
         private void OnDisable() => RemoveListeners();
@@ -25,10 +28,15 @@ namespace CheckerAI.Objects
         private void AddListeners()
         {
             m_Button.onClick.AddListener(OnCheckerClicked);
+
+            EventManager.DEACTIVATE_SELECTED_CHECKERS += SetColor;
         }
         private void RemoveListeners()
         {
             m_Button.onClick.RemoveListener(OnCheckerClicked);
+
+            EventManager.DEACTIVATE_SELECTED_CHECKERS -= SetColor;
+
         }
 
 
@@ -39,30 +47,22 @@ namespace CheckerAI.Objects
         }
 
 
-
-
         public PlayerType GetPlayerType() => m_CheckerProperties.GetPlayerType;
         private void SetColor()=>m_Image.color = m_CheckerProperties.GetColor();
         private void SetSprite()=>m_Image.sprite = m_CheckerProperties.GetSprite();
 
         private void OnCheckerClicked()
         {
-            List<Square> possibleSquares= EventManager.CHECKER_POSSIBLE_MOVES?.Invoke(this);
+            EventManager.DEACTIVATE_SELECTED_CHECKERS?.Invoke();
 
-            
-            if(possibleSquares.Count > 0 )
+            this.gameObject.GetComponent<Image>().color = Color.red; 
+
+            List<Square> possibleMoves=EventManager.GET_CHECKER_POSSIBLE_MOVES_EVENT?.Invoke(this);
+
+            foreach (var item in possibleMoves)
             {
-                Square square = this.transform.GetComponentInParent<Square>();
-
-                square.gameObject.GetComponent<Image>().color = Color.red;
-
-                foreach (var item in possibleSquares)
-                {
-                    item.gameObject.GetComponent<Image>().color = Color.red;
-                }
+                item.gameObject.GetComponent<Image>().color= Color.red;
             }
-
-           
         }
 
     }

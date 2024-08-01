@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-
+using CheckerAI.Objects;
 
 namespace CheckerAI.UI
 {
@@ -31,11 +31,25 @@ namespace CheckerAI.UI
 
         private void OnPlayerTurnClicked()
         {
-            EventManager.PLAYER_TURN?.Invoke(Objects.PlayerType.Player);
+            EventManager.DEACTIVATE_SELECTED_CHECKERS?.Invoke();
+
+            List<Checker> checkers= EventManager.GET_CHECKER_EVENT?.Invoke(PlayerType.Player);
+
+            foreach (Checker checker in checkers)
+            {
+                checker.gameObject.GetComponent<Image>().color = Color.red;
+            }
         }
         private void OnOpponentTurnClicked()
         {
-            EventManager.PLAYER_TURN?.Invoke(Objects.PlayerType.Opponent);
+            EventManager.DEACTIVATE_SELECTED_CHECKERS?.Invoke();
+
+            List<Checker> checkers = EventManager.GET_CHECKER_EVENT?.Invoke(PlayerType.Opponent);
+
+            foreach (Checker checker in checkers)
+            {
+                checker.gameObject.GetComponent<Image>().color = Color.red;
+            }
         }
     }
 }

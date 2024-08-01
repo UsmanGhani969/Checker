@@ -1,4 +1,5 @@
 using CheckerAI.Objects;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Security.Cryptography;
@@ -27,21 +28,23 @@ namespace CheckerAI.Utilities
         [SerializeField]
         private Transform m_PlayerChecker;
 
+        [SerializeField]
+        private Square[,] m_Square;
+
+
 
         private void OnEnable() => AddListeners();
         private void OnDisable() => RemoveListeners();
 
         private void AddListeners()
         {
-            EventManager.CHECKER_POSSIBLE_MOVES += GetCheckerPossibleMove;
-
-            EventManager.PLAYER_TURN += Turn;
+            EventManager.GET_CHECKER_EVENT += GetCheckers;
+            EventManager.GET_CHECKER_POSSIBLE_MOVES_EVENT += GetCheckerPossibleMove;
         }
         private void RemoveListeners()
         {
-            EventManager.CHECKER_POSSIBLE_MOVES -= GetCheckerPossibleMove;
-
-            EventManager.PLAYER_TURN -= Turn;
+            EventManager.GET_CHECKER_EVENT -= GetCheckers;
+            EventManager.GET_CHECKER_POSSIBLE_MOVES_EVENT -= GetCheckerPossibleMove;
         }
 
 
@@ -62,7 +65,7 @@ namespace CheckerAI.Utilities
 
             int columnRows =(int)m_ResourceLoader.GetGameSettings.GetBoardSize;
 
-            Square[,] square = new Square[columnRows, columnRows];
+            m_Square = new Square[columnRows, columnRows];
 
             m_Layout.constraintCount = columnRows;
 
@@ -75,7 +78,8 @@ namespace CheckerAI.Utilities
 
                 for(int j = 0;j<columnRows; j++)
                 {
-                    GameObject _Clone = (i % 2 != 0) ? ((j % 2 == 0) ? m_EmptySquarePrefab.gameObject : m_SquarePrefab.gameObject) : ((j % 2 != 0) ? m_EmptySquarePrefab.gameObject : m_SquarePrefab.gameObject); 
+
+                    GameObject _Clone = ((i+j)%2==0) ? m_SquarePrefab.gameObject : m_EmptySquarePrefab.gameObject;
 
                     _Clone=Instantiate(_Clone);               
                     _Clone.gameObject.name = i + "_" + j;
@@ -87,13 +91,13 @@ namespace CheckerAI.Utilities
                     s.Init();
                     s.SetPosition(i, j);
 
-                    square[i,j]=(s);
+                    m_Square[i,j]=(s);
 
                 }
             }
 
-            GenerateOpponentCheckers(square, columnRows, cellSize);
-            GeneratePlayerCheckers(square, columnRows,cellSize);
+            GenerateOpponentCheckers(columnRows, cellSize);
+            GeneratePlayerCheckers(columnRows,cellSize);
         }
 
 
@@ -105,33 +109,56 @@ namespace CheckerAI.Utilities
         /// <param name="_columnRows">Number of Columns on the Board</param>
         /// <param name="_CellSize">Square Size</param>
         #endregion
-        private void GenerateOpponentCheckers(Square[,] _Square,int _columnRows,int _CellSize)
+        private void GenerateOpponentCheckers(int _columnRows,int _CellSize)
         {
             int totalRows=((_columnRows)/2)-1;
 
-            bool flag = true;
 
-            for (int i = 0; i < totalRows; i++)
+            for (int i=0;i<totalRows;i++)
             {
+
                 for (int j = 0; j < _columnRows; j++)
                 {
-                    if(flag)
+
+                    if ((i + j) % 2 == 0)
                     {
-                        if(j % 2 == 0)
-                        {
-                            CreateCheckerPrefab(m_OpponentChecker.gameObject, _Square, _CellSize, i, j);
-                        }
+                        CreateCheckerPrefab(m_OpponentChecker.gameObject, m_Square[i, j], _CellSize, i, j);
                     }
-                    else
+                
+                }
+
+            }
+
+           
+        }
+
+
+        #region Summary
+        /// <summary>
+        /// Place Opponent Cheekers On Board
+        /// </summary>
+        /// <param name="_Square">All Movable Squares</param>
+        /// <param name="_columnRows">Number of Columns on the Board</param>
+        /// <param name="_CellSize">Square Size</param>
+        #endregion
+        private void GeneratePlayerCheckers(int _columnRows, int _CellSize)
+        {
+
+            int totalRows = ((_columnRows) / 2) - 1;
+
+            for (int i = _columnRows - 1; i >= (_columnRows - totalRows); i--)
+            {
+
+                for (int j = 0; j < _columnRows; j++)
+                {
+                    if ((i + j) % 2 == 0)
                     {
-                        if(j%2!=0)
-                        {
-                            CreateCheckerPrefab(m_OpponentChecker.gameObject, _Square, _CellSize, i, j);
-                        }
+                        CreateCheckerPrefab(m_PlayerChecker.gameObject, m_Square[i, j], _CellSize, i, j);
                     }
                 }
-                flag ^= true;
+
             }
+
         }
 
 
@@ -145,10 +172,10 @@ namespace CheckerAI.Utilities
         /// <param name="_CIndex">Column Index</param>
         /// <param name="_RIndex">Row Index</param>
         #endregion
-        private void CreateCheckerPrefab(GameObject _CheckerPrefab, Square[,] _Square,int _CellSize,int _CIndex,int _RIndex)
+        private void CreateCheckerPrefab(GameObject _CheckerPrefab, Square _Square,int _CellSize,int _CIndex,int _RIndex)
         {
             GameObject checker = Instantiate(_CheckerPrefab);
-            checker.transform.SetParent(_Square[_CIndex, _RIndex].transform);
+            checker.transform.SetParent(_Square.transform);
             checker.transform.localScale = Vector3.one;
             checker.GetComponent<Checker>().Init();
 
@@ -158,201 +185,36 @@ namespace CheckerAI.Utilities
 
         #region Summary
         /// <summary>
-        /// Place Opponent Cheekers On Board
-        /// </summary>
-        /// <param name="_Square">All Movable Squares</param>
-        /// <param name="_columnRows">Number of Columns on the Board</param>
-        /// <param name="_CellSize">Square Size</param>
-        #endregion
-        private void GeneratePlayerCheckers(Square[,] _Square, int _columnRows, int _CellSize)
-        {
-
-            int totalRows = ((_columnRows) / 2) - 1;
-
-            bool flag = false;
-
-            for (int i = 0; i < totalRows; i++)
-            {
-                for (int j = _columnRows-1; j>=0; j--)
-                {
-                    if (flag)
-                    {
-                        if (j % 2 == 0)
-                        {
-                            CreateCheckerPrefab(m_PlayerChecker.gameObject, _Square, _CellSize, (_columnRows - i)-1, j);
-                        }
-                    }
-                    else
-                    {
-                        if (j % 2 != 0)
-                        {
-                            CreateCheckerPrefab(m_PlayerChecker.gameObject, _Square, _CellSize,(_columnRows-i)-1, j);
-                        }
-                    }
-                }
-                flag ^= true;
-            }
-
-        }
-
-
-        #region Summary
-        /// <summary>
-        /// Which Turn is This Player Or Opponent
-        /// </summary>
-        /// <param name="playerType">Player Or Opponent</param>
-        /// <returns></returns>
-        #endregion
-        private void Turn(PlayerType playerType)
-        {
-            List<Checker> checkerList = new List<Checker>();    
-
-            switch (playerType)
-            {
-                case PlayerType.Player:
-                    checkerList=GetPlayerCheckers();
-                    break;
-                case PlayerType.Opponent:
-                    checkerList=GetOpponentCheckers();
-                    break;
-            }
-
-           FindMovableCheckers(checkerList);
-        }
-
-
-        #region Summary
-        /// <summary>
-        /// Get All Available Path/Squares for Move.
-        /// </summary>
-        /// <returns></returns>
-        #endregion
-        private List<Square> GetAllMovableSquares()
-        {
-            List<Square> squares = new List<Square>();
-
-            for (int i = 0; i < m_Content.childCount; i++)
-            {
-               squares.Add(m_Content.transform.GetChild(i).GetComponent<Square>());
-            }
-
-            return squares;
-        }
-
-
-        #region Summary
-        /// <summary>
         /// Get All Available Player Checkers
         /// </summary>
         /// <returns></returns>
         #endregion
-        private List<Checker> GetPlayerCheckers()
+        private List<Checker> GetCheckers(PlayerType _playerType)
         {
             List<Checker> checkers = new List<Checker>();
 
-            foreach (Square square in GetAllMovableSquares())
+            int columnRows = (int)m_ResourceLoader.GetGameSettings.GetBoardSize;
+
+
+            for (int i = 0;i<columnRows;i++)
             {
-                if(square.GetComponentInChildren<Checker>() != null)
+                for(int j = 0;j<columnRows;j++)
                 {
-                    Checker checker = square.GetComponentInChildren<Checker>();
-                    if(checker.GetPlayerType() == PlayerType.Player)
+                    if ((i+j)%2==0)
                     {
-                        checkers.Add(checker);
-                    }
-                }
-            }
-            return checkers;
-        }
+                        Checker checker = m_Square[i, j].GetComponentInChildren<Checker>();
 
-
-        #region Summary
-        /// <summary>
-        /// Get All Available Opponent Checkers
-        /// </summary>
-        /// <returns></returns>
-        #endregion
-        private List<Checker> GetOpponentCheckers()
-        {
-            List<Checker> checkers = new List<Checker>();
-
-            foreach (Square square in GetAllMovableSquares())
-            {
-                if (square.GetComponentInChildren<Checker>() != null)
-                {
-                    Checker checker = square.GetComponentInChildren<Checker>();
-                    if (checker.GetPlayerType() == PlayerType.Opponent)
-                    {
-                        checkers.Add(checker);
-                    }
-                }
-            }
-            return checkers;
-        }
-
-        #region Summary
-        /// <summary>
-        /// Get All Available Empty Squares Which Have no checker on it
-        /// </summary>
-        /// <returns></returns>
-        #endregion
-        private List<Square> GetEmptySquares()
-        {
-            List<Square> squares = new List<Square>();
-
-            foreach (Square square in GetAllMovableSquares())
-            {
-                square.Init();
-
-                if (square.GetComponentInChildren<Checker>() == null)
-                {
-                    squares.Add(square);
-                }
-            }
-
-            return squares;
-        }
-
-
-        #region Summary
-        /// <summary>
-        /// Get All Movable Checkers
-        /// </summary>
-        /// <param name="_checkers">search data</param>
-        #endregion
-        private void FindMovableCheckers(List<Checker> _checkers)
-        {
-
-            List<Square> sq = GetEmptySquares();
-
-            foreach (Checker checker in _checkers)
-            {
-                Square square = checker.gameObject.GetComponentInParent<Square>();
-                int rowValue = square.GetPosition().Row;
-                int columnValue = square.GetPosition().Column;
-
-                foreach (var item in sq)
-                {
-
-                    item.Init();
-
-                    int EmptySquareRowValue = item.GetPosition().Row;
-                    int EmptySquareColumnValue = item.GetPosition().Column;
-
-                    int r_diff = Mathf.Abs(rowValue - EmptySquareRowValue);
-                    int c_diff = Mathf.Abs(EmptySquareColumnValue - columnValue);
-
-
-
-                    if (r_diff == 1)
-                    {
-                        if (c_diff == 1)
+                        if (checker != null)
                         {
-                            square.gameObject.GetComponent<Image>().color= Color.red;
-                            break;
+                            if (checker.GetPlayerType() == _playerType)
+                            {
+                                checkers.Add(checker);
+                            }
                         }
                     }
                 }
             }
+            return checkers;
         }
 
 
@@ -366,18 +228,22 @@ namespace CheckerAI.Utilities
         {
 
             Square square = checker.gameObject.GetComponentInParent<Square>();
+
             int rowValue = square.GetPosition().Row;
             int columnValue= square.GetPosition().Column;
 
             List<Square> possibleSquares = new List<Square>();
 
-            foreach (var item in GetEmptySquares())
+            List<Square> emptySquares = new();
+            emptySquares = FindEmptySquares();
+
+            foreach (var item in emptySquares)
             {
 
                 item.Init();
 
                 int EmptySquareRowValue = item.GetPosition().Row;
-                int EmptySquareColumnValue= item.GetPosition().Column;
+                int EmptySquareColumnValue = item.GetPosition().Column;
 
                 int r_diff = Mathf.Abs(rowValue - EmptySquareRowValue);
                 int c_diff = Mathf.Abs(EmptySquareColumnValue - columnValue);
@@ -386,7 +252,7 @@ namespace CheckerAI.Utilities
 
                 if (r_diff == 1)
                 {
-                    if (c_diff==1)
+                    if (c_diff == 1)
                     {
                         possibleSquares.Add(item);
                     }
@@ -397,6 +263,30 @@ namespace CheckerAI.Utilities
 
         }
 
+        private List<Square> FindEmptySquares()
+        {
+            List<Square> squares = new List<Square>();
+
+            int columnRows = (int)m_ResourceLoader.GetGameSettings.GetBoardSize;
+
+
+            for (int i = 0; i < columnRows; i++)
+            {
+                for (int j = 0; j < columnRows; j++)
+                {
+                    if ((i + j) % 2 == 0)
+                    {
+                        Checker checker = m_Square[i, j].GetComponentInChildren<Checker>();
+
+                        if (checker == null)
+                        {
+                            squares.Add(m_Square[i,j]);
+                        }
+                    }
+                }
+            }
+            return squares;
+        }
 
 
 

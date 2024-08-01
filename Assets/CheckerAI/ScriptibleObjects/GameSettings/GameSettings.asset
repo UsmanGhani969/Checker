@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c08e5688295c114d881145f141fd50c, type: 3}
   m_Name: GameSettings
   m_EditorClassIdentifier: 
-  m_BoardSize: 6
+  m_BoardSize: 4
   m_BoardSizes:
   - BoardSize: 4
     CellSize: 400

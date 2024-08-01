@@ -1,3 +1,4 @@
+using CheckerAI.Utilities;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -17,6 +18,21 @@ namespace CheckerAI.Objects
 
         [SerializeField]
         private SquarePosition Position;
+
+
+        private void OnEnable() => AddListeners();
+        private void OnDisable() => RemoveListeners();
+
+        private void AddListeners()
+        {
+            EventManager.DEACTIVATE_SELECTED_CHECKERS += SetColor;
+        }
+        private void RemoveListeners()
+        {
+            EventManager.DEACTIVATE_SELECTED_CHECKERS -= SetColor;
+        }
+
+
 
 
 

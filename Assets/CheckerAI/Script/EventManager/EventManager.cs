@@ -9,9 +9,11 @@ namespace CheckerAI.Utilities
     public class EventManager 
     {
 
-        public static Func<Checker,List<Square>> CHECKER_POSSIBLE_MOVES;
+        public static Action DEACTIVATE_SELECTED_CHECKERS;
 
-        public static Action<PlayerType> PLAYER_TURN;
+        public static Func<PlayerType, List<Checker>> GET_CHECKER_EVENT;
+
+        public static Func<Checker, List<Square>> GET_CHECKER_POSSIBLE_MOVES_EVENT;
         
     }
 }
